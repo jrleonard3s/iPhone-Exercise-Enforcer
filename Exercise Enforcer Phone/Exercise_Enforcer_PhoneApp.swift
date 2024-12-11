@@ -9,9 +9,11 @@ import SwiftUI
 
 @main
 struct Exercise_Enforcer_PhoneApp: App {
+    @StateObject var exerciseEnforcer = ExerciseEnforcer()
+    
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            MainView(viewModel: exerciseEnforcer)
         }
     }
 }

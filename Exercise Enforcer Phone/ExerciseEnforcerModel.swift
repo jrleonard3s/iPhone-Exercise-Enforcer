@@ -6,3 +6,11 @@
 //
 
 import Foundation
+
+struct ExerciseEnforcerModel {
+    private(set) var lastHeartRate: Int = 0
+    
+    mutating func updateHeartRate(_ heartRate: Int) {
+        lastHeartRate = heartRate
+    }
+}

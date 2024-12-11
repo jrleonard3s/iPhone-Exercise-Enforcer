@@ -8,15 +8,21 @@
 import SwiftUI
 
 struct MainView: View {
-    var viewModel: ExerciseEnforcer
+    @ObservedObject var viewModel: ExerciseEnforcer
     var body: some View {
         VStack {
-            Image(systemName: "globe")
-                .imageScale(.large)
-                .foregroundStyle(.tint)
-            Text("Hello, world!")
+            heartRateView
+            Button("Increment"){
+                viewModel.incrementHeartRate()
+            }
         }
         .padding()
+    }
+    
+    var heartRateView: some View{
+        Text(String(viewModel.heartRate))
+            .font(.largeTitle)
+            .padding()
     }
 }
 
@@ -27,5 +33,5 @@ struct MainView: View {
 
 
 #Preview {
-    MainView(exerciseEnforcer: ExerciseEnforcer())
+    MainView(viewModel: ExerciseEnforcer())
 }
