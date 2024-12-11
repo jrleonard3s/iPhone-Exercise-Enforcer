@@ -1,5 +1,5 @@
 //
-//  ContentView.swift
+//  MainView.swift
 //  Exercise Enforcer Phone
 //
 //  Created by Joshua Leonard on 12/10/24.
@@ -7,7 +7,8 @@
 
 import SwiftUI
 
-struct ContentView: View {
+struct MainView: View {
+    var viewModel: ExerciseEnforcer
     var body: some View {
         VStack {
             Image(systemName: "globe")
@@ -19,6 +20,12 @@ struct ContentView: View {
     }
 }
 
+
+
+
+
+
+
 #Preview {
-    ContentView()
+    MainView(exerciseEnforcer: ExerciseEnforcer())
 }
