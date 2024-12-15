@@ -13,6 +13,7 @@ import HealthKit
 class ExerciseEnforcer: ObservableObject {
     var model: ExerciseEnforcerModel = ExerciseEnforcerModel()
     @Published private(set) var currentHeartRate: UInt = 0
+    @Published private(set) var currentHeartRateZone: UInt = 0
     
     // Healthkit
     private var healthStore: HKHealthStore
@@ -20,9 +21,9 @@ class ExerciseEnforcer: ObservableObject {
     private var query: HKAnchoredObjectQuery?
     
     // Heart rate values
-    private let TARGET_ZONE_MAX: UInt
+    let TARGET_ZONE_MAX: UInt
+    let TARGET_ZONE_MIN: UInt
     private(set) var TARGET_ZONES : [UInt]
-    var targetHeartRate: UInt
     var lastHeartRateReadTime: Date = Date()
     
     var session = AVAudioSession.sharedInstance()
@@ -45,7 +46,7 @@ class ExerciseEnforcer: ObservableObject {
         // Set heart rate constants
         TARGET_ZONE_MAX = user_max_heartrate
         TARGET_ZONES = [0, UInt(Double(TARGET_ZONE_MAX) * 0.5), UInt(Double(TARGET_ZONE_MAX) * 0.6), UInt(Double(TARGET_ZONE_MAX) * 0.7), UInt(Double(TARGET_ZONE_MAX) * 0.8), UInt(Double(TARGET_ZONE_MAX) * 0.9)]
-        self.targetHeartRate = 110// TARGET_ZONES[2]
+        TARGET_ZONE_MIN = TARGET_ZONES[2]
         
         self.requestAuthorization { authorised in
             if authorised {
@@ -116,7 +117,7 @@ class ExerciseEnforcer: ObservableObject {
             return
         }
         lastHeartRateReadTime = Date()
-        if(heartRate > targetHeartRate && heartRate < TARGET_ZONE_MAX){
+        if(heartRate > TARGET_ZONE_MIN && heartRate < TARGET_ZONE_MAX){
             print("pass")
             lastSuccessTimeDate = Date()
         }
@@ -124,8 +125,34 @@ class ExerciseEnforcer: ObservableObject {
             print("fail")
             lastFailureTimeDate = Date()
         }
-        
+        updateCurrentHeartRateZone()
         enforce()
+    }
+    
+    func updateCurrentHeartRateZone(){
+        currentHeartRateZone = calculateHrZone()
+    }
+    
+    func calculateHrZone() -> UInt{
+        if(currentHeartRate > TARGET_ZONE_MAX){
+        return 6;
+      }
+        if(currentHeartRate >= TARGET_ZONES[5]){
+        return 5;
+      }
+      if(currentHeartRate >= TARGET_ZONES[4]){
+        return 4;
+      }
+      if(currentHeartRate >= TARGET_ZONES[3]){
+        return 3;
+      }
+      if(currentHeartRate >= TARGET_ZONES[2]){
+        return 2;
+      }
+      if(currentHeartRate >= TARGET_ZONES[1]){
+        return 1;
+      }
+      return 0;
     }
     
     func enforce(){
