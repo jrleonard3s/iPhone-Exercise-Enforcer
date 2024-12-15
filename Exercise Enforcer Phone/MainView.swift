@@ -20,10 +20,11 @@ struct MainView: View {
     }
     
     var heartRateView: some View{
-        Text(String(viewModel.heartRate))
+        Text(String(viewModel.currentHeartRate))
             .font(.largeTitle)
             .padding()
     }
+    
 }
 
 

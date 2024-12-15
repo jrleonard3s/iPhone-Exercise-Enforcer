@@ -13,7 +13,7 @@ struct Exercise_Enforcer_PhoneApp: App {
     
     var body: some Scene {
         WindowGroup {
-            MainView(viewModel: exerciseEnforcer)
+            MainView(viewModel: exerciseEnforcer )
         }
     }
 }
