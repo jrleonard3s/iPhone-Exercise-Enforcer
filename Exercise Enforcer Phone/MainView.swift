@@ -11,11 +11,7 @@ struct MainView: View {
     @ObservedObject var viewModel: ExerciseEnforcer
     var body: some View {
         VStack {
-            /*
-            Button("Increment"){
-                viewModel.incrementHeartRate()
-            } */
-            Spacer()
+            timerView
             HStack(){
                 heartRateView
                 Spacer()
@@ -24,13 +20,31 @@ struct MainView: View {
                 heartRateZoneView
             }
             HeartRateZoneCollectionView(activeZone: viewModel.currentHeartRateZone)
+            mediaView
+            if(viewModel.enableDebug){
+                debugView
+            }
         }
         .padding()
     }
     
+    var timerView: some View{
+        VStack(){Text("20:00")
+                .font(.largeTitle)
+            HStack(){
+                Button("Start"){
+                    viewModel.startWorkout()
+                }.disabled(!viewModel.workoutPaused)
+                Button("Pause"){
+                    viewModel.pauseWorkout()
+                }.disabled(viewModel.workoutPaused)
+            }
+        }
+    }
+    
     var encouragementView: some View{
         if(viewModel.currentHeartRate < viewModel.TARGET_ZONE_MIN){
-            Text("Go faster!")
+            Text("Go faster!").font(.title)
         } else if(viewModel.currentHeartRate > viewModel.TARGET_ZONE_MAX){
             Text("Slow down!")
         }
@@ -52,6 +66,31 @@ struct MainView: View {
                 .font(.largeTitle).padding(5).padding([.bottom], 0)
             Text("Zone").padding([.horizontal,.bottom], 5).padding([.top], 0)
         }.border(.black)
+    }
+    var mediaView: some View{
+        VStack(){
+            Text(viewModel.mediaPaused ? "Media interrupted" : "Media playing").font(.largeTitle)
+            if(viewModel.mediaPaused && viewModel.timeUntilPlaySeconds <= 3 && viewModel.timeUntilPlaySeconds > 0){
+                Text("playing in \(viewModel.timeUntilPlaySeconds)")
+            }
+            else if(!viewModel.mediaPaused && viewModel.timeUntilPauseSeconds <= 5 && viewModel.timeUntilPauseSeconds > 0)
+            {
+                Text("pausing in \(viewModel.timeUntilPauseSeconds)")
+            }
+        }
+    }
+    var debugView: some View{
+        HStack(){
+            Button("lowBPM"){
+                viewModel.setDebugBPM(70)
+            }
+            Button("inZoneBPM"){
+                viewModel.setDebugBPM(140)
+            }
+            Button("highBPM"){
+                viewModel.setDebugBPM(240)
+            }
+        }
     }
     
 }

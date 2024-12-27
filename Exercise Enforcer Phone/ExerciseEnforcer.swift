@@ -21,14 +21,21 @@ class ExerciseEnforcer: ObservableObject {
     private var query: HKAnchoredObjectQuery?
     
     // Heart rate values
+    let HR_THRESHOLD_BUFFER: Int = 10
     let TARGET_ZONE_MAX: UInt
     let TARGET_ZONE_MIN: UInt
     private(set) var TARGET_ZONES : [UInt]
     var lastHeartRateReadTime: Date = Date()
+    var lastSuccessTimeDate: Date = Date()
+    var lastFailureTimeDate: Date = Date()
     
+    // AV
     var session = AVAudioSession.sharedInstance()
+    var mediaPaused = false
     
-    var paused = false
+    // Timer
+    @Published private(set) var workoutPaused = true
+    var periodicTimer: Timer?
     
     init(){
         // Default to my max hr
@@ -47,6 +54,13 @@ class ExerciseEnforcer: ObservableObject {
         TARGET_ZONE_MAX = user_max_heartrate
         TARGET_ZONES = [0, UInt(Double(TARGET_ZONE_MAX) * 0.5), UInt(Double(TARGET_ZONE_MAX) * 0.6), UInt(Double(TARGET_ZONE_MAX) * 0.7), UInt(Double(TARGET_ZONE_MAX) * 0.8), UInt(Double(TARGET_ZONE_MAX) * 0.9)]
         TARGET_ZONE_MIN = TARGET_ZONES[2]
+        
+        print("zones: ")
+        for zone in TARGET_ZONES{
+            print(zone)
+        }
+        print("TARGET_ZONE_MIN: \(TARGET_ZONE_MAX)")
+        print("TARGET_ZONE_MAX: \(TARGET_ZONE_MAX)")
         
         self.requestAuthorization { authorised in
             if authorised {
@@ -106,7 +120,7 @@ class ExerciseEnforcer: ObservableObject {
     func updateHeartRate(_ heartRate: UInt) {
         print("time since last success: \(lastSuccessTimeDate.timeIntervalSinceNow)")
         print("time since last failure: \(lastFailureTimeDate.timeIntervalSinceNow)")
-        currentHeartRate = heartRate
+        currentHeartRate = (enableDebug ? debugBPM : heartRate)
         print(currentHeartRate)
         // if data is stale throw reset all the values to now
         if(lastHeartRateReadTime + 20 < Date()){
@@ -117,7 +131,7 @@ class ExerciseEnforcer: ObservableObject {
             return
         }
         lastHeartRateReadTime = Date()
-        if(heartRate > TARGET_ZONE_MIN && heartRate < TARGET_ZONE_MAX){
+        if(currentHeartRate > TARGET_ZONE_MIN && currentHeartRate < TARGET_ZONE_MAX){
             print("pass")
             lastSuccessTimeDate = Date()
         }
@@ -126,7 +140,33 @@ class ExerciseEnforcer: ObservableObject {
             lastFailureTimeDate = Date()
         }
         updateCurrentHeartRateZone()
+    }
+    
+    func startEnforcement(){
+        //Setup enforcement loop
+        if(periodicTimer == nil){
+            periodicTimer = Timer.scheduledTimer(timeInterval: 0.9,
+                                                 target: self,
+                                                 selector: #selector(periodicEnforce),
+                                                 userInfo: nil,
+                                                 repeats: true)
+            periodicTimer?.tolerance = 0.05
+        }
+        periodicTimer?.fire()
+    }
+    
+    func stopEnforcement(){
+        periodicTimer?.invalidate()
+    }
+    
+    @objc func periodicEnforce(){
+        print("running enforcer periodically")
         enforce()
+        //Decrement timer?
+    }
+    
+    func connectToHrMonitor(){
+        
     }
     
     func updateCurrentHeartRateZone(){
@@ -155,20 +195,45 @@ class ExerciseEnforcer: ObservableObject {
       return 0;
     }
     
+    @Published private(set) var timeUntilPauseSeconds: Int = 0
+    @Published private(set) var timeUntilPlaySeconds: Int = 0
+    
     func enforce(){
+        if(enableDebug){
+            updateHeartRate(debugBPM)
+        }
         // Has been passing for >= HR_THRESHOLD_BUFFER/3 seconds
         // Making the pass criteria shorter than the fail so the positive feedback happens quickly
-        if(self.lastSuccessTimeDate >= self.lastFailureTimeDate +  TimeInterval(HR_THRESHOLD_BUFFER/2))
+        let rewardTime = self.lastFailureTimeDate + TimeInterval(HR_THRESHOLD_BUFFER/2)
+        print("reward Time")
+        print(rewardTime)
+        let pauseTime = self.lastSuccessTimeDate + TimeInterval(HR_THRESHOLD_BUFFER)
+        print("pause Time")
+        print(pauseTime)
+        
+        self.timeUntilPauseSeconds = Int(abs(pauseTime.timeIntervalSinceNow))
+        self.timeUntilPlaySeconds = Int(abs(rewardTime.timeIntervalSinceNow))
+        print("timeUntilPauseSeconds: \(timeUntilPauseSeconds)")
+        print("timeUntilPlaySeconds: \(timeUntilPlaySeconds)")
+        if(self.lastSuccessTimeDate >=  rewardTime)
         {
           rewardUser();
         }
         // Has been failing for >= HR_THRESHOLD_BUFFER seconds
-        else if(self.lastFailureTimeDate >= self.lastSuccessTimeDate + TimeInterval(HR_THRESHOLD_BUFFER))
+        else if(self.lastFailureTimeDate >= pauseTime)
         {
           punishUser();
         }
     }
     
+    var enableDebug: Bool = true
+    private var debugBPM: UInt = 0
+    
+    func setDebugBPM(_ bpm: UInt){
+        debugBPM = bpm
+    }
+    
+    /* Media interaction */
     func rewardUser(){
         print("reward!")
         interruptMusic(false)
@@ -178,17 +243,26 @@ class ExerciseEnforcer: ObservableObject {
         interruptMusic(true)
     }
     
-    let HR_THRESHOLD_BUFFER: Int = 10
-    var lastSuccessTimeDate: Date = Date()
-    var lastFailureTimeDate: Date = Date()
-    
-    /* Media interaction */
     func interruptMusic(_ shouldPause: Bool){
         if(shouldPause){
             try? session.setActive(true)
+            mediaPaused = true
         }
         else {
             try? session.setActive(false, options: AVAudioSession.SetActiveOptions.notifyOthersOnDeactivation)
+            mediaPaused = false
         }
+    }
+    
+    /* Timer interaction */
+    func startWorkout(){
+        workoutPaused = false
+        startEnforcement()
+        //TODO start countdown timer
+    }
+    func pauseWorkout(){
+        workoutPaused = true
+        stopEnforcement()
+        //TODO stop countdown timer
     }
 }

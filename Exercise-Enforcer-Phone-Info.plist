@@ -2,6 +2,16 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>BGTaskSchedulerPermittedIdentifiers</key>
+	<array/>
+	<key>Background Enforcement Task</key>
+	<string>rstrat.games.enforcer.background.task</string>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>audio</string>
+		<string>bluetooth-central</string>
+		<string>processing</string>
+	</array>
 	<key>kTCCServiceMediaLibrary</key>
 	<string>Uses music to play and pause audio</string>
 </dict>
