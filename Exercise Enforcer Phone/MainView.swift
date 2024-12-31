@@ -11,11 +11,13 @@ struct MainView: View {
     @ObservedObject var viewModel: ExerciseEnforcer
     var body: some View {
         VStack {
-            timerView
+            Spacer()
+            encouragementView
+            Spacer()
             HStack(){
                 heartRateView
                 Spacer()
-                encouragementView
+                timerView
                 Spacer()
                 heartRateZoneView
             }
@@ -24,33 +26,37 @@ struct MainView: View {
             if(viewModel.enableDebug){
                 debugView
             }
+            Spacer()
         }
         .padding()
     }
     
     var timerView: some View{
-        VStack(){Text("20:00")
-                .font(.largeTitle)
-            HStack(){
+        VStack(){Text(viewModel.timeRemainingString).font(.system(size: 50)).padding(1)
+            ZStack(){
                 Button("Start"){
                     viewModel.startWorkout()
-                }.disabled(!viewModel.workoutPaused)
+                }.font(.title).disabled(!viewModel.workoutPaused).opacity(!viewModel.workoutPaused ? 0 : 1)
                 Button("Pause"){
                     viewModel.pauseWorkout()
-                }.disabled(viewModel.workoutPaused)
-            }
-        }
+                }.font(.title).disabled(viewModel.workoutPaused).opacity(viewModel.workoutPaused ? 0 : 1)
+            }.buttonStyle(.bordered).padding(.top, 1).padding(.bottom, 30)
+        }.lineSpacing(0.0)
     }
     
     var encouragementView: some View{
-        if(viewModel.currentHeartRate < viewModel.TARGET_ZONE_MIN){
-            Text("Go faster!").font(.title)
-        } else if(viewModel.currentHeartRate > viewModel.TARGET_ZONE_MAX){
-            Text("Slow down!")
-        }
-        else{
-            Text("Doing great!")
-        }
+        ZStack(){
+            let heartrateInTargetZone = viewModel.currentHeartRate >= viewModel.TARGET_ZONE_MIN && viewModel.currentHeartRate <= viewModel.TARGET_ZONE_MAX
+            RoundedRectangle(cornerRadius: 1.0).fill(heartrateInTargetZone ? .green : .red).frame(maxWidth: .infinity).aspectRatio(5.0, contentMode: .fit)
+            if(viewModel.currentHeartRate < viewModel.TARGET_ZONE_MIN){
+                Text("Go faster!")
+            } else if(viewModel.currentHeartRate > viewModel.TARGET_ZONE_MAX){
+                Text("Slow down!")
+            }
+            else{
+                Text("Doing great!")
+            }
+        }.font(.largeTitle).bold()
     }
     
     var heartRateView: some View{

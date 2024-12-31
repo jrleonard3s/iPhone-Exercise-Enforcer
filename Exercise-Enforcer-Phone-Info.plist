@@ -3,14 +3,14 @@
 <plist version="1.0">
 <dict>
 	<key>BGTaskSchedulerPermittedIdentifiers</key>
-	<array/>
-	<key>Background Enforcement Task</key>
-	<string>rstrat.games.enforcer.background.task</string>
+	<array>
+		<string>rstrat.games.enforcer.background.task</string>
+	</array>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>audio</string>
 		<string>bluetooth-central</string>
-		<string>processing</string>
+		<string>fetch</string>
 	</array>
 	<key>kTCCServiceMediaLibrary</key>
 	<string>Uses music to play and pause audio</string>
